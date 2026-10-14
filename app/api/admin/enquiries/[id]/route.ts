@@ -19,8 +19,9 @@ export async function PATCH(
   }
 
   const { id } = params
-  if (!id || typeof id !== 'string') {
-    return NextResponse.json({ error: 'Missing enquiry id.' }, { status: 400 })
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id ?? '')
+  if (!id || !isUUID) {
+    return NextResponse.json({ error: 'Invalid or missing enquiry ID.' }, { status: 400 })
   }
 
   let body: unknown

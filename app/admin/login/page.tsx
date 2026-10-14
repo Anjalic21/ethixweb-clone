@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import LoginForm from '@/components/admin/LoginForm'
+import BrandLogo from '@/components/BrandLogo'
 
 export const metadata: Metadata = { title: 'Admin Login | Ethixweb' }
 
@@ -16,11 +18,10 @@ export default async function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <span className="inline-flex items-center gap-2 font-bold text-xl tracking-tight">
-            <span className="inline-block w-7 h-7 rounded bg-[#E51D25]" aria-hidden="true" />
-            <span className="text-white">Ethix<span className="text-[#E51D25]">web</span></span>
-          </span>
-          <p className="mt-2 text-sm text-[rgba(231,235,242,0.45)]">Admin Dashboard</p>
+          <Link href="/" className="inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FF3843] rounded" aria-label="Ethixweb Home">
+            <BrandLogo className="h-8 w-auto" priority />
+          </Link>
+          <p className="mt-3 text-xs font-mono tracking-widest uppercase text-[rgba(231,235,242,0.45)]">ADMIN DASHBOARD</p>
         </div>
 
         <div className="rounded-2xl bg-[#13141A] border border-white/5 p-8">

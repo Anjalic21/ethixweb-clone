@@ -9,7 +9,7 @@ import { getRateLimiter } from '@/lib/ratelimit'
 const schema = z.object({
   name:     z.string().min(2).max(100),
   email:    z.string().email().max(254),
-  phone:    z.string().regex(/^[+\d\s\-()]{7,15}$/).or(z.literal('')).optional(),
+  phone:    z.string().regex(/^[+\d\s\-()]{7,20}$/).or(z.literal('')).optional(),
   company:  z.string().max(100).optional(),
   service:  z.enum(['web', 'mobile', 'marketing', 'uiux', 'performance', 'brand', 'other']),
   budget:   z.enum(['under-50k', '50k-150k', '150k-500k', 'above-500k', 'not-sure', '']).optional(),

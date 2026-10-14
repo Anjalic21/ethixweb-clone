@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import LogoutButton from '@/components/admin/LogoutButton'
+import BrandLogo from '@/components/BrandLogo'
 import {
   STATUS_LABELS,
   STATUS_COLORS,
@@ -37,25 +38,38 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const session = await auth()
   if (!session?.user) redirect('/admin/login')
 
-  const q      = (searchParams.q      ?? '').trim()
+  const rawQ   = (searchParams.q      ?? '').trim()
+  const q      = rawQ.replace(/[,()]/g, '')
   const status = (searchParams.status ?? '').trim()
 
-  const supabase = createServerSupabaseClient()
+  let enquiries: Enquiry[] | null = null
+  let errorMessage: string | null = null
 
-  let query = supabase
-    .from('enquiries')
-    .select('id, name, email, phone, company, service, budget, message, status, created_at')
-    .order('created_at', { ascending: false })
+  try {
+    const supabase = createServerSupabaseClient()
 
-  if (status && ENQUIRY_STATUSES.includes(status as EnquiryStatus)) {
-    query = query.eq('status', status)
+    let query = supabase
+      .from('enquiries')
+      .select('id, name, email, phone, company, service, budget, message, status, created_at')
+      .order('created_at', { ascending: false })
+
+    if (status && ENQUIRY_STATUSES.includes(status as EnquiryStatus)) {
+      query = query.eq('status', status)
+    }
+
+    if (q) {
+      query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+    }
+
+    const { data, error } = await query.returns<Enquiry[]>()
+    if (error) {
+      errorMessage = error.message
+    } else {
+      enquiries = data
+    }
+  } catch (err: unknown) {
+    errorMessage = err instanceof Error ? err.message : 'Database service connection unavailable.'
   }
-
-  if (q) {
-    query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%`)
-  }
-
-  const { data: enquiries, error } = await query.returns<Enquiry[]>()
 
   return (
     <div className="min-h-screen bg-[#0C0D10]">
@@ -63,10 +77,11 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       <header className="border-b border-white/[0.06] bg-[#0C0D10]/90 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="inline-block w-6 h-6 rounded bg-[#E51D25]" aria-hidden="true" />
-            <span className="font-bold text-white text-sm">
-              Ethix<span className="text-[#E51D25]">web</span>
-              <span className="text-[rgba(231,235,242,0.35)] font-normal ml-2">Admin</span>
+            <Link href="/" className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-[#FF3843] rounded" aria-label="Ethixweb Home">
+              <BrandLogo className="h-5 w-auto" />
+            </Link>
+            <span className="text-[rgba(231,235,242,0.35)] font-normal text-xs font-mono border-l border-white/10 pl-2.5">
+              Admin
             </span>
           </div>
           <LogoutButton />
@@ -129,14 +144,14 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         </form>
 
         {/* Error state */}
-        {error && (
+        {errorMessage && (
           <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-300 mb-6">
-            Failed to load enquiries: {error.message}
+            Failed to load enquiries: {errorMessage}
           </div>
         )}
 
         {/* Empty state */}
-        {!error && (!enquiries || enquiries.length === 0) && (
+        {!errorMessage && (!enquiries || enquiries.length === 0) && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Inbox size={36} className="text-[rgba(231,235,242,0.20)] mb-3" />
             <p className="text-[rgba(231,235,242,0.40)] text-sm">

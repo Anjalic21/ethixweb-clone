@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import StatusUpdater from '@/components/admin/StatusUpdater'
 import LogoutButton from '@/components/admin/LogoutButton'
+import BrandLogo from '@/components/BrandLogo'
 import {
   STATUS_LABELS,
   STATUS_COLORS,
@@ -40,18 +41,23 @@ interface PageProps {
 
 export default async function EnquiryDetailPage({ params }: PageProps) {
   const session = await auth()
-  if (!session?.user) redirect('/admin/login')
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params?.id ?? '')
+  if (!isUUID) notFound()
 
-  const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase
-    .from('enquiries')
-    .select('*')
-    .eq('id', params.id)
-    .single()
+  let enquiry: Enquiry | null = null
+  try {
+    const supabase = createServerSupabaseClient()
+    const { data, error } = await supabase
+      .from('enquiries')
+      .select('*')
+      .eq('id', params.id)
+      .single()
 
-  if (error || !data) notFound()
-
-  const enquiry = data as Enquiry
+    if (error || !data) notFound()
+    enquiry = data as Enquiry
+  } catch {
+    notFound()
+  }
 
   return (
     <div className="min-h-screen bg-[#0C0D10]">
@@ -59,10 +65,11 @@ export default async function EnquiryDetailPage({ params }: PageProps) {
       <header className="border-b border-white/[0.06] bg-[#0C0D10]/90 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="inline-block w-6 h-6 rounded bg-[#E51D25]" aria-hidden="true" />
-            <span className="font-bold text-white text-sm">
-              Ethix<span className="text-[#E51D25]">web</span>
-              <span className="text-[rgba(231,235,242,0.35)] font-normal ml-2">Admin</span>
+            <Link href="/" className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-[#FF3843] rounded" aria-label="Ethixweb Home">
+              <BrandLogo className="h-5 w-auto" />
+            </Link>
+            <span className="text-[rgba(231,235,242,0.35)] font-normal text-xs font-mono border-l border-white/10 pl-2.5">
+              Admin
             </span>
           </div>
           <LogoutButton />
